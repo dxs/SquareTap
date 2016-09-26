@@ -26,5 +26,16 @@ namespace SquareTap
         {
             this.InitializeComponent();
         }
-    }
+
+		private void onePlayerClick(object sender, RoutedEventArgs e)
+		{
+			Frame.Navigate(typeof(onePlayer.oneP));
+		}
+
+		private void twoPlayerClick(object sender, RoutedEventArgs e)
+		{
+
+		}
+
+	}
 }
