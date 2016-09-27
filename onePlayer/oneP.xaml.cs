@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Storage.Streams;
 using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -12,6 +15,7 @@ using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.Xaml.Shapes;
 
@@ -38,6 +42,7 @@ namespace SquareTap.onePlayer
 		DispatcherTimer starter;
 		DispatcherTimer party;
 		private const double coefAugmentation = 1.1;
+		private ImageBrush redImage, orangeImage;
 		private Score myScore;
 
 		private Point ThrowPosition;
@@ -46,7 +51,11 @@ namespace SquareTap.onePlayer
 		{
 			this.InitializeComponent();
 			myScore = new Score("Sven");
-			myScore.score = 0;
+			myScore.score = 20;
+			redImage = new ImageBrush() { ImageSource = new BitmapImage()
+			{ UriSource = new Uri("ms-appx:///Images/RedWhite.jpg") } };
+			orangeImage = new ImageBrush() { ImageSource = new BitmapImage()
+			{ UriSource = new Uri("ms-appx:///Images/OrangeWhite.jpg") } };
 			this.Loaded += OneP_Loaded;
 		}
 
@@ -97,19 +106,36 @@ namespace SquareTap.onePlayer
 			if (nbCase == 0)
 				return;
 			int item = 0;
-			int iteration = 0;
-			while (true)
+
+			for (int i = 0; i < new Random().Next(1, 6); i++)
 			{
-				item = new Random().Next(nbCase);
-				if (list[item].Fill == new SolidColorBrush(Colors.AliceBlue))
-					break;
-				if (iteration++ > 10)
-					break;
+				while (true)
+				{
+					item = new Random().Next(nbCase);
+					if (list[item].Fill == redImage)
+						break;
+				}
+				switch(new Random().Next(3))
+				{
+					case 0:
+					case 1:
+						list[item].Fill = redImage;
+						break;
+					case 2:
+						list[item].Fill = orangeImage;
+						break;
+				}
+
+				DispatcherTimer shutDownTimer = new DispatcherTimer() { Interval = new TimeSpan(0, 0, 0, 0, new Random().Next(100, 2500))}; //use a tag or smth to detect
+				shutDownTimer.Tick += (t, args) =>
+				{
+					foreach (Rectangle k in list)
+					{; }
+				};
 			}
 
-			list[item].Fill = new SolidColorBrush(Colors.Bisque);
 			
-			party.Interval = new TimeSpan(0, 0, 0, 0, new Random().Next(100,1000));
+			party.Interval = new TimeSpan(0, 0, 0, 0, new Random().Next(100,700));
 		}
 
 		private void InitPolygon()
@@ -128,15 +154,28 @@ namespace SquareTap.onePlayer
 						Height = height,
 						Fill = trans,
 						Stroke = new SolidColorBrush(Colors.Gray),
-						RenderTransform = new TranslateTransform()
+						RenderTransform = new TranslateTransform(),
 					});
 					list.Last().Tapped += OneP_Tapped;
 					list.Last().ManipulationMode = ManipulationModes.All;
+					list.Last().ManipulationDelta -= Item_ManipulationDelta;
+					list.Last().ManipulationCompleted -= Item_ManipulationCompleted;
 					Canvas.SetLeft(list.Last(), j * (width + space) + startWidth);
 					Canvas.SetTop(list.Last(), i * (height + space) + startHeight);
+					Canvas.SetZIndex(list.Last(), i*j + j);
 					Board.Children.Add(list.Last());
 				}
 			}
+		}
+
+		private void Item_ManipulationCompleted(object sender, ManipulationCompletedRoutedEventArgs e)
+		{
+			throw new NotImplementedException();
+		}
+
+		private void Item_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e)
+		{
+			throw new NotImplementedException();
 		}
 
 		private void OneP_Tapped(object sender, TappedRoutedEventArgs e)
@@ -147,8 +186,15 @@ namespace SquareTap.onePlayer
 				{
 					if (item == (sender as Rectangle))
 					{
+						if(item.Fill == redImage)
+							MyScore = (--myScore.score).ToString();
+						else
+						{
+							myScore.score += 5;
+							MyScore = (myScore).score.ToString();
+						}
 						item.Fill = trans;
-						MyScore = (--myScore.score).ToString();
+
 						break;
 					}
 				}
@@ -156,42 +202,44 @@ namespace SquareTap.onePlayer
 			else
 			{
 				myScore.score += 10;
-				MyScore = (myScore).ToString();
+				MyScore = (myScore).score.ToString();
 			}
 			this.Bindings.Update();
 			if(myScore.score <= 0)
 			{
+				party.Stop();
 				foreach (Rectangle item in list)
+				{
 					item.Fill = trans;
+					item.ManipulationCompleted += Item_ManipulationCompleted;
+					item.ManipulationDelta += Item_ManipulationDelta;
+				}
 				StartMoving();
 			}
 		}
 
-		private void StartMoving()
+		private async void StartMoving()
 		{
 			scorePanel.Visibility = Visibility.Collapsed;
 			ThrowPosition = new Point();
 			ThrowPosition.X = (Board.ActualWidth / 2) - width / 2;
 			ThrowPosition.Y = (Board.ActualHeight) - 3 / 2 * height;
-			bool done = false;
-			while (!done)
+			int iteration = 0;
+			foreach (Rectangle item in list)
 			{
-				foreach (Rectangle item in list)
+				iteration = 0;
+				Point actual = item.TransformToVisual(Window.Current.Content).TransformPoint(new Point(0, 0));
+				while (Math.Round(actual.X) != Math.Round(ThrowPosition.X) || Math.Round(actual.Y) != Math.Round(ThrowPosition.Y))
 				{
-					done = false;
-					Point actual = item.TransformToVisual(Window.Current.Content).TransformPoint(new Point(0, 0));
-					if (Math.Round(actual.X) != Math.Round(ThrowPosition.X) || Math.Round(actual.Y) != Math.Round(ThrowPosition.Y))
-					{
-						(item.RenderTransform as TranslateTransform).X = ThrowPosition.X - actual.X;
-						(item.RenderTransform as TranslateTransform).Y = ThrowPosition.Y - actual.Y;
-						done = false;
+					(item.RenderTransform as TranslateTransform).X = (ThrowPosition.X - actual.X);
+					(item.RenderTransform as TranslateTransform).Y = (ThrowPosition.Y - actual.Y);
+					actual = item.TransformToVisual(Window.Current.Content).TransformPoint(new Point(0, 0));
+					await Task.Delay(5);
+					if(iteration++ > 50)
 						break;
-					}
-					else
-						done = true;
 				}
+				Debug.WriteLine("X : {0}", actual.X);
 			}
-			DebugSettings.writ
 		}
 
 		private void GetCanvasSize()
