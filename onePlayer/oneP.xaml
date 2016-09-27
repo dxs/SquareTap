@@ -6,8 +6,51 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
+	<Page.Transitions>
+		<TransitionCollection>
+			<NavigationThemeTransition>
+				<NavigationThemeTransition.DefaultNavigationTransitionInfo>
+					<ContinuumNavigationTransitionInfo />
+				</NavigationThemeTransition.DefaultNavigationTransitionInfo>
+			</NavigationThemeTransition>
+		</TransitionCollection>
+	</Page.Transitions>
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+	<Page.Resources>
+		<Style TargetType="TextBlock" x:Key="Score">
+			<Setter Property="FontFamily" Value="Ravie" />
+			<Setter Property="FontSize" Value="24" />
+			<Setter Property="Foreground" Value="#CC5533FF" />
+			<Setter Property="HorizontalAlignment" Value="Center" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="Margin" Value="10" />
+			<Setter Property="Padding" Value="10"
+			/>
+		</Style>
+	</Page.Resources>
+	
+	<Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" VerticalAlignment="Stretch">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition />
+		</Grid.RowDefinitions>
+		
+			<StackPanel Name="scorePanel" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10" Grid.Row="0">
+				
+				<TextBlock Text="Remains" Style="{StaticResource Score}"/>
+				<TextBlock Text="{x:Bind MyScore, Mode=TwoWay}" Style="{StaticResource Score}"/>
+				
+			</StackPanel>
 
-    </Grid>
+		<Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Grid.Row="1">
+			<Canvas VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="Board">
+				<Canvas.ChildrenTransitions>
+					<TransitionCollection>
+						<EntranceThemeTransition IsStaggeringEnabled="True" FromHorizontalOffset="300" />
+					</TransitionCollection>
+				</Canvas.ChildrenTransitions>
+			</Canvas>
+			<TextBlock Name="centerText" FontSize="40" FontFamily="Ravie" Text="Ready?" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#CC5533FF"/>
+		</Grid>
+	</Grid>
 </Page>

@@ -6,7 +6,19 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
+	
+	<Page.Transitions>
+		<TransitionCollection>
+			<NavigationThemeTransition>
+				<NavigationThemeTransition.DefaultNavigationTransitionInfo>
+					<ContinuumNavigationTransitionInfo />
+				</NavigationThemeTransition.DefaultNavigationTransitionInfo>
+			</NavigationThemeTransition>
+		</TransitionCollection>
+	</Page.Transitions>
+	
 	<Page.Resources>
+
 		<Style TargetType="TextBlock" x:Key="PersonalTitle">
 			<Setter Property="FontSize" Value="25" />
 			<Setter Property="HorizontalAlignment" Value="Center" />
@@ -28,6 +40,9 @@
 			<Setter Property="FontFamily" Value="Ravie" />
 			<Setter Property="Margin" Value="30" />
 			<Setter Property="Padding" Value="10" />
+			<Setter Property="BorderThickness" Value="3" />
+			<Setter Property="FocusVisualPrimaryBrush" Value="#CC5533FF" />
+			<Setter Property="FocusVisualSecondaryBrush" Value="#CC5533FF" />
 		</Style>
 
 		<Style TargetType="Rectangle" x:Key="PersonalRectangle">
@@ -42,6 +57,12 @@
 	</Page.Resources>
 
 	<Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+		<Grid.ChildrenTransitions>
+			<TransitionCollection>
+				<EntranceThemeTransition FromVerticalOffset="480" IsStaggeringEnabled="True"/>
+			</TransitionCollection>
+		</Grid.ChildrenTransitions>
+		
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto"/>
 			<RowDefinition />
@@ -49,6 +70,12 @@
 		
 		<StackPanel Margin="10" Grid.Row="0">
 			<TextBlock Style="{StaticResource PersonalTitle}" Text="Square Tap"/>
+			<Button>
+				<Grid>
+					<Border Background="AliceBlue" CornerRadius="5"/>
+					<TextBlock Text="blablabla" />
+				</Grid>
+			</Button>
 		</StackPanel>
 
 		<StackPanel Margin="10" Grid.Row="1" VerticalAlignment="Center">
@@ -58,8 +85,13 @@
 			</Grid>
 
 			<Grid Padding="10">
+				<Border HorizontalAlignment="Stretch" VerticalAlignment="Stretch" CornerRadius="5" Background="#CC5533FF"/>
 				<Rectangle Style="{StaticResource PersonalRectangle}"/>
-				<Button Style="{StaticResource PersonalBlock}" Content="2 Players" Click="twoPlayerClick"/>
+				<Button Style="{StaticResource PersonalBlock}" Click="twoPlayerClick">
+					<Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+						<TextBlock Text="2 Players" />
+					</Grid>
+				</Button>
 			</Grid>
 
 			<Grid>
@@ -75,7 +107,9 @@
 
 				<Grid Padding="10" Grid.Column="1" HorizontalAlignment="Center">
 					<Ellipse Style="{StaticResource PersonalEllipse}"/>
-					<Button Style="{StaticResource PersonalBlock}" />
+					<Button Style="{StaticResource PersonalBlock}">
+						<Border CornerRadius="50" />
+					</Button>
 				</Grid>
 			</Grid>
 		</StackPanel>
