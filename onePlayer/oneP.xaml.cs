@@ -44,13 +44,14 @@ namespace SquareTap.onePlayer
 		private const double coefAugmentation = 1.1;
 		private ImageBrush redImage, orangeImage;
 		private Score myScore;
-
+		private List<DispatcherTimer> listTimer;
 		private Point ThrowPosition;
 
 		public oneP()
 		{
 			this.InitializeComponent();
 			myScore = new Score("Sven");
+			listTimer = new List<DispatcherTimer>();
 			myScore.score = 20;
 			redImage = new ImageBrush() { ImageSource = new BitmapImage()
 			{ UriSource = new Uri("ms-appx:///Images/RedWhite.jpg") } };
@@ -109,10 +110,11 @@ namespace SquareTap.onePlayer
 
 			for (int i = 0; i < new Random().Next(1, 6); i++)
 			{
+				Debug.WriteLine("Created a Dot");
 				while (true)
 				{
 					item = new Random().Next(nbCase);
-					if (list[item].Fill == redImage)
+					if (list[item].Fill == trans)
 						break;
 				}
 				switch(new Random().Next(3))
@@ -126,12 +128,32 @@ namespace SquareTap.onePlayer
 						break;
 				}
 
-				DispatcherTimer shutDownTimer = new DispatcherTimer() { Interval = new TimeSpan(0, 0, 0, 0, new Random().Next(100, 2500))}; //use a tag or smth to detect
+				DispatcherTimer shutDownTimer = new DispatcherTimer()
+				{
+					Interval = new TimeSpan(0, 0, 0, 0, new Random().Next(400, 2500))
+				};
+
+				listTimer.Add(shutDownTimer);
+
 				shutDownTimer.Tick += (t, args) =>
 				{
-					foreach (Rectangle k in list)
-					{; }
+					listTimer.Remove(t as DispatcherTimer);
+					(t as DispatcherTimer).Stop();
+					bool success = false;
+					int size = list.Count;
+					int itemIntern = 0;
+					do
+					{
+						itemIntern = new Random().Next(size);
+						if (list[itemIntern].Fill != trans)
+						{
+							list[itemIntern].Fill = trans;
+							success = true;
+						}
+					} while (!success);
+					Debug.WriteLine("Deleted a dot");
 				};
+				shutDownTimer.Start();
 			}
 
 			
@@ -186,8 +208,11 @@ namespace SquareTap.onePlayer
 				{
 					if (item == (sender as Rectangle))
 					{
-						if(item.Fill == redImage)
+						if (item.Fill == redImage)
+						{
 							MyScore = (--myScore.score).ToString();
+							listTimer.Remove(listTimer[0]);
+						}
 						else
 						{
 							myScore.score += 5;
