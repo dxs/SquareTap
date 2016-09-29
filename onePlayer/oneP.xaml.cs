@@ -28,9 +28,8 @@ namespace SquareTap.onePlayer
 	/// </summary>
 	public sealed partial class oneP : Page
 	{
-		List<Rectangle> list = null;
+		List<Home> list = null;
 		public string MyScore { get; set; }
-		private SolidColorBrush trans = new SolidColorBrush(Colors.Transparent);
 		private double width = 80;
 		private double height = 80;
 		private double nCaseW = 0;
@@ -42,21 +41,15 @@ namespace SquareTap.onePlayer
 		DispatcherTimer starter;
 		DispatcherTimer party;
 		private const double coefAugmentation = 1.1;
-		private ImageBrush redImage, orangeImage;
+
 		private Score myScore;
-		private List<DispatcherTimer> listTimer;
 		private Point ThrowPosition;
 
 		public oneP()
 		{
 			this.InitializeComponent();
 			myScore = new Score("Sven");
-			listTimer = new List<DispatcherTimer>();
 			myScore.score = 20;
-			redImage = new ImageBrush() { ImageSource = new BitmapImage()
-			{ UriSource = new Uri("ms-appx:///Images/RedWhite.jpg") } };
-			orangeImage = new ImageBrush() { ImageSource = new BitmapImage()
-			{ UriSource = new Uri("ms-appx:///Images/OrangeWhite.jpg") } };
 			this.Loaded += OneP_Loaded;
 		}
 
@@ -71,7 +64,7 @@ namespace SquareTap.onePlayer
 		{
 			party = new DispatcherTimer()
 			{
-				Interval = new TimeSpan(0, 0, 0,0, 1000)
+				Interval = new TimeSpan(0, 0, 0, 0, 1000)
 			};
 			party.Tick += Party_Tick;
 
@@ -108,136 +101,103 @@ namespace SquareTap.onePlayer
 				return;
 			int item = 0;
 
-			for (int i = 0; i < new Random().Next(1, 6); i++)
+			while (true)
 			{
-				Debug.WriteLine("Created a Dot");
-				while (true)
-				{
-					item = new Random().Next(nbCase);
-					if (list[item].Fill == trans)
-						break;
-				}
-				switch(new Random().Next(3))
-				{
-					case 0:
-					case 1:
-						list[item].Fill = redImage;
-						break;
-					case 2:
-						list[item].Fill = orangeImage;
-						break;
-				}
-
-				DispatcherTimer shutDownTimer = new DispatcherTimer()
-				{
-					Interval = new TimeSpan(0, 0, 0, 0, new Random().Next(400, 2500))
-				};
-
-				listTimer.Add(shutDownTimer);
-
-				shutDownTimer.Tick += (t, args) =>
-				{
-					listTimer.Remove(t as DispatcherTimer);
-					(t as DispatcherTimer).Stop();
-					bool success = false;
-					int size = list.Count;
-					int itemIntern = 0;
-					do
-					{
-						itemIntern = new Random().Next(size);
-						if (list[itemIntern].Fill != trans)
-						{
-							list[itemIntern].Fill = trans;
-							success = true;
-						}
-					} while (!success);
-					Debug.WriteLine("Deleted a dot");
-				};
-				shutDownTimer.Start();
+				item = Rand.GetInteger(nbCase);
+				if (list[item].Rect.Fill == SvenColors.trans && list[item].Locked == false)
+					break;
+			}
+			switch (Rand.GetInteger(3))
+			{
+				case 0:
+				case 1:
+					list[item].Rect.Fill = SvenColors.redImage;
+					break;
+				case 2:
+					list[item].Rect.Fill = SvenColors.orangeImage;
+					break;
 			}
 
-			
-			party.Interval = new TimeSpan(0, 0, 0, 0, new Random().Next(100,700));
+			list[item].SetIntervalRun(new TimeSpan(0, 0, 0, 0, Rand.GetInteger(500, 3000)));
+			list[item].RunTimer.Start();
+
+
+			party.Interval = new TimeSpan(0, 0, 0, 0, Rand.GetInteger(5,500));
 		}
 
 		private void InitPolygon()
 		{
 			if (list == null)
-				list = new List<Rectangle>();
+				list = new List<Home>();
 			else
 				list.Clear();
 			for (int i = 0; i < nCaseH; i++)
 			{
 				for (int j = 0; j < nCaseW; j++)
 				{
-					list.Add(new Rectangle()
-					{
-						Width = width,
-						Height = height,
-						Fill = trans,
-						Stroke = new SolidColorBrush(Colors.Gray),
-						RenderTransform = new TranslateTransform(),
-					});
-					list.Last().Tapped += OneP_Tapped;
-					list.Last().ManipulationMode = ManipulationModes.All;
-					list.Last().ManipulationDelta -= Item_ManipulationDelta;
-					list.Last().ManipulationCompleted -= Item_ManipulationCompleted;
-					Canvas.SetLeft(list.Last(), j * (width + space) + startWidth);
-					Canvas.SetTop(list.Last(), i * (height + space) + startHeight);
-					Canvas.SetZIndex(list.Last(), i*j + j);
-					Board.Children.Add(list.Last());
+					list.Add(new Home(width, height));
+					list.Last().Rect.Tapped += OneP_Tapped;
+					list.Last().Rect.ManipulationMode = ManipulationModes.All;
+					list.Last().Rect.ManipulationDelta -= Item_ManipulationDelta;
+					list.Last().Rect.ManipulationCompleted -= Item_ManipulationCompleted;
+					Canvas.SetLeft(list.Last().Rect, j * (width + space) + startWidth);
+					Canvas.SetTop(list.Last().Rect, i * (height + space) + startHeight);
+					Canvas.SetZIndex(list.Last().Rect, i*j + j);
+					Board.Children.Add(list.Last().Rect);
 				}
 			}
 		}
 
 		private void Item_ManipulationCompleted(object sender, ManipulationCompletedRoutedEventArgs e)
 		{
-			throw new NotImplementedException();
+			
 		}
 
 		private void Item_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e)
 		{
-			throw new NotImplementedException();
+			TranslateTransform a = (sender as Rectangle).RenderTransform as TranslateTransform;
+			a.X += e.Delta.Translation.X;
+			a.Y += e.Delta.Translation.Y;
 		}
 
 		private void OneP_Tapped(object sender, TappedRoutedEventArgs e)
 		{
-			if ((sender as Rectangle).Fill != trans)
+			if ((sender as Rectangle).Fill != SvenColors.trans)
 			{
-				foreach (Rectangle item in list)
+				foreach (Home item in list)
 				{
-					if (item == (sender as Rectangle))
+					if (item.Rect == (sender as Rectangle))
 					{
-						if (item.Fill == redImage)
+						if (item.Rect.Fill == SvenColors.redImage)
 						{
 							MyScore = (--myScore.score).ToString();
-							listTimer.Remove(listTimer[0]);
+							item.RunTimer.Stop();
+							item.Lock();
 						}
 						else
 						{
-							myScore.score += 5;
+							myScore.score += 2;
 							MyScore = (myScore).score.ToString();
 						}
-						item.Fill = trans;
-
+						item.Rect.Fill = SvenColors.trans;
 						break;
 					}
 				}
 			}
 			else
 			{
-				myScore.score += 10;
+				myScore.score += 4;
 				MyScore = (myScore).score.ToString();
 			}
 			this.Bindings.Update();
 			if(myScore.score <= 0)
 			{
 				party.Stop();
-				foreach (Rectangle item in list)
+				foreach (Home item in list)
 				{
-					item.Fill = trans;
-					item.ManipulationCompleted += Item_ManipulationCompleted;
-					item.ManipulationDelta += Item_ManipulationDelta;
+					item.Rect.Fill = SvenColors.trans;
+					item.Rect.ManipulationCompleted += Item_ManipulationCompleted;
+					item.Rect.ManipulationDelta += Item_ManipulationDelta;
 				}
 				StartMoving();
 			}
@@ -250,21 +210,29 @@ namespace SquareTap.onePlayer
 			ThrowPosition.X = (Board.ActualWidth / 2) - width / 2;
 			ThrowPosition.Y = (Board.ActualHeight) - 3 / 2 * height;
 			int iteration = 0;
-			foreach (Rectangle item in list)
+			foreach (Home item in list)
 			{
 				iteration = 0;
-				Point actual = item.TransformToVisual(Window.Current.Content).TransformPoint(new Point(0, 0));
+				Point actual = item.Rect.TransformToVisual(Window.Current.Content).TransformPoint(new Point(0, 0));
 				while (Math.Round(actual.X) != Math.Round(ThrowPosition.X) || Math.Round(actual.Y) != Math.Round(ThrowPosition.Y))
 				{
-					(item.RenderTransform as TranslateTransform).X = (ThrowPosition.X - actual.X);
-					(item.RenderTransform as TranslateTransform).Y = (ThrowPosition.Y - actual.Y);
-					actual = item.TransformToVisual(Window.Current.Content).TransformPoint(new Point(0, 0));
+					actual = item.Rect.TransformToVisual(Window.Current.Content).TransformPoint(new Point(0, 0));
+
+					(item.Rect.RenderTransform as TranslateTransform).X = (ThrowPosition.X - actual.X);
+					(item.Rect.RenderTransform as TranslateTransform).Y = (ThrowPosition.Y - actual.Y);
 					await Task.Delay(5);
 					if(iteration++ > 50)
 						break;
+					actual = item.Rect.TransformToVisual(Window.Current.Content).TransformPoint(new Point(0, 0));
 				}
-				Debug.WriteLine("X : {0}", actual.X);
+				GiveColorToItem();
 			}
+		}
+
+		private void GiveColorToItem()
+		{
+			foreach (Home item in list)
+				item.Rect.Fill = SvenColors.GetRandomColor();
 		}
 
 		private void GetCanvasSize()
